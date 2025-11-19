@@ -64,10 +64,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wsl-bzImage
-          path: ${{ runner.home }}/WSL2-Linux-Kernel/arch/x86/boot/bzImage
+          path: "$HOME/WSL2-Linux-Kernel/arch/x86/boot/bzImage"
 
       - name: Upload v4l2loopback module
         uses: actions/upload-artifact@v4
         with:
           name: v4l2loopback.ko
-          path: ${{ runner.home }}/v4l2loopback/v4l2loopback.ko
+          path: "$HOME/v4l2loopback/v4l2loopback.ko"
