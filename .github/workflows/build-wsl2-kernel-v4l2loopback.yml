@@ -1,0 +1,73 @@
+name: Build WSL2 Kernel / v4l2loopback
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build-wsl2-kernel-v4l2loopback.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 1 * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential \
+            flex \
+            bison \
+            libssl-dev \
+            libelf-dev \
+            bc \
+            dwarves \
+            git
+
+      # Step 1: Build kernel
+      - name: Clone WSL2 Linux Kernel
+        run: |
+          cd "$HOME"
+          git clone --depth 1 https://github.com/microsoft/WSL2-Linux-Kernel.git
+
+      - name: Build WSL2 Linux Kernel
+        run: |
+          cd "$HOME/WSL2-Linux-Kernel"
+          cp Microsoft/config-wsl .config
+
+          # Enable camera / media configs
+          scripts/config --enable CONFIG_MEDIA_SUPPORT
+          scripts/config --enable CONFIG_MEDIA_CAMERA_SUPPORT
+          scripts/config --enable CONFIG_VIDEO_DEV
+
+          yes "" | make -j"$(nproc)"
+          ls -lh arch/x86/boot/bzImage
+
+      - name: Clone and configure v4l2loopback
+        run: |
+          cd "$HOME"
+          git clone --depth 1 https://github.com/umlaeute/v4l2loopback.git
+          cp $GITHUB_WORKSPACE/v4l2loopback_Makefile.wsl $HOME/v4l2loopback/Makefile.wsl
+
+      - name: Build v4l2loopback module
+        run: |
+          cd "$HOME/v4l2loopback"
+          make -f Makefile.wsl
+          ls -lh v4l2loopback.ko
+
+      - name: Upload kernel bzImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: wsl-bzImage
+          path: ${{ runner.home }}/WSL2-Linux-Kernel/arch/x86/boot/bzImage
+
+      - name: Upload v4l2loopback module
+        uses: actions/upload-artifact@v4
+        with:
+          name: v4l2loopback.ko
+          path: ${{ runner.home }}/v4l2loopback/v4l2loopback.ko
