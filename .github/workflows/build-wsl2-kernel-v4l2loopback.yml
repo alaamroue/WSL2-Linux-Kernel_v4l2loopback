@@ -29,7 +29,6 @@ jobs:
             dwarves \
             git
 
-      # Step 1: Build kernel
       - name: Clone WSL2 Linux Kernel
         run: |
           cd "$HOME"
@@ -39,6 +38,45 @@ jobs:
         run: |
           cd "$HOME/WSL2-Linux-Kernel"
           cp Microsoft/config-wsl .config
+
+          # For some reason, this has to be updated for docker to work
+          scripts/config --enable CONFIG_BRIDGE
+          scripts/config --enable CONFIG_BRIDGE_NETFILTER
+          scripts/config --enable CONFIG_NFT_COMPAT
+          scripts/config --enable CONFIG_NETFILTER_XT_NAT
+          scripts/config --enable CONFIG_NETFILTER_XT_TARGET_MASQUERADE
+          scripts/config --enable CONFIG_NETFILTER_XT_MATCH_ADDRTYPE
+          scripts/config --enable CONFIG_NETFILTER_XT_MATCH_CONNTRACK
+          scripts/config --enable CONFIG_NETFILTER_XT_MARK
+          scripts/config --enable CONFIG_IP_NF_IPTABLES
+          scripts/config --enable CONFIG_IP_NF_FILTER
+          scripts/config --enable CONFIG_IP_NF_NAT
+          scripts/config --enable CONFIG_IP_NF_TARGET_MASQUERADE
+          scripts/config --enable CONFIG_IP_NF_MANGLE
+          scripts/config --enable CONFIG_IP_VS
+          scripts/config --enable CONFIG_NETFILTER_XT_MATCH_IPVS
+          scripts/config --enable CONFIG_XFRM_USER
+          scripts/config --enable CONFIG_XFRM_ALGO
+          scripts/config --enable CONFIG_INET_ESP
+          scripts/config --enable CONFIG_IP_VS_RR
+          scripts/config --enable CONFIG_NET_CLS_CGROUP
+          scripts/config --enable CONFIG_IP_NF_TARGET_REDIRECT
+          scripts/config --enable CONFIG_IPVLAN
+          scripts/config --enable CONFIG_MACVLAN
+          scripts/config --enable CONFIG_DUMMY
+          scripts/config --enable CONFIG_NF_NAT_FTP
+          scripts/config --enable CONFIG_NF_CONNTRACK_FTP
+          scripts/config --enable CONFIG_NF_NAT_TFTP
+          scripts/config --enable CONFIG_NF_CONNTRACK_TFTP
+          scripts/config --enable CONFIG_BTRFS_FS
+
+          # For tailscale
+          scripts/config --enable CONFIG_TUN
+          scripts/config --enable CONFIG_WIREGUARD
+          scripts/config --enable CONFIG_IP_NF_IPTABLES
+          scripts/config --enable CONFIG_NETFILTER_NETLINK_GLUE_CT
+          scripts/config --enable CONFIG_NETFILTER_XT_MATCH_CONNTRACK
+          scripts/config --enable CONFIG_NETFILTER_XT_TARGET_MASQUERADE
 
           # Enable camera / media configs
           scripts/config --enable CONFIG_MEDIA_SUPPORT
@@ -64,10 +102,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wsl-bzImage
-          path: "$HOME/WSL2-Linux-Kernel/arch/x86/boot/bzImage"
+          path: ${{ env.HOME }}/WSL2-Linux-Kernel/arch/x86/boot/bzImage
 
       - name: Upload v4l2loopback module
         uses: actions/upload-artifact@v4
         with:
           name: v4l2loopback.ko
-          path: "$HOME/v4l2loopback/v4l2loopback.ko"
+          path: ${{ env.HOME }}/v4l2loopback/v4l2loopback.ko
